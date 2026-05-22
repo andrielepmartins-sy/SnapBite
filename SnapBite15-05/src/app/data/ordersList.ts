@@ -2,6 +2,9 @@
 
 import { Order } from "../types/Order";
 
+// Tipo estrito para os quatro status permitidos no sistema
+type OrderStatus = "pending" | "production" | "sent" | "delivered";
+
 // In a real app this would be persisted to a backend
 export const ordersList: Order[] = [
   {
@@ -56,21 +59,35 @@ export const ordersList: Order[] = [
   },
 ];
 
-export const ORDER_STATUSES = {
+// Mapeamento dos metadados com chaves estritas (evita que o TypeScript infira chaves genéricas)
+export const ORDER_STATUSES: Record<
+  OrderStatus, 
+  { label: string; color: string; icon: string; next: OrderStatus | null }
+> = {
   pending: {
     label: "Pedido Recebido",
     color: "yellow",
     icon: "📋",
     next: "production",
   },
-  production: { label: "Em Produção", color: "blue", icon: "👨‍🍳", next: "sent" },
+  production: { 
+    label: "Em Produção", 
+    color: "blue", 
+    icon: "👨‍🍳", 
+    next: "sent" 
+  },
   sent: {
     label: "Saiu para Entrega",
     color: "orange",
     icon: "🛵",
     next: "delivered",
   },
-  delivered: { label: "Entregue", color: "green", icon: "✅", next: null },
+  delivered: { 
+    label: "Entregue", 
+    color: "green", 
+    icon: "✅", 
+    next: null 
+  },
 };
 
 let orderCounter = 3;
@@ -79,6 +96,7 @@ export function createOrder(orderData: Omit<Order, "id" | "status" | "statusHist
   const id = `ORD-${String(orderCounter++).padStart(3, "0")}`;
   const now = new Date();
   const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+  
   const newOrder: Order = {
     ...orderData,
     id,
@@ -89,21 +107,26 @@ export function createOrder(orderData: Omit<Order, "id" | "status" | "statusHist
     createdAt: now.toISOString(),
     estimatedTime: "30-45 min",
   };
+  
   ordersList.push(newOrder);
   return newOrder;
 }
 
-export function updateOrderStatus(orderId: string, newStatus: keyof typeof ORDER_STATUSES) {
+// Corrigido: o parâmetro agora aceita explicitamente o tipo estruturado da união de status
+export function updateOrderStatus(orderId: string, newStatus: OrderStatus) {
   const order = ordersList.find((o) => o.id === orderId);
   if (!order) return null;
+  
   const now = new Date();
   const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+  
   order.status = newStatus;
   order.statusHistory.push({
     status: newStatus,
     time: timeStr,
     label: ORDER_STATUSES[newStatus].label,
   });
+  
   return order;
 }
 

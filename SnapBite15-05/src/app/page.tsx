@@ -20,6 +20,7 @@ import Image from "next/image";
 // IMPORTS
 import { productsList } from "./data/productsList";
 import { categoriesList } from "./data/categoriesList";
+import { ordersList } from "./data/ordersList";
 
 type CartItem = {
   id: number;
@@ -36,6 +37,7 @@ type CartItem = {
 
 export default function Home() {
 
+  const [openOrders, setOpenOrders] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
   const [search, setSearch] = useState("");
   const [openCart, setOpenCart] = useState(false);
@@ -202,7 +204,10 @@ export default function Home() {
           {/* NAV */}
           <nav className="flex items-center gap-6 ml-auto mr-9">
 
-            <button className="flex items-center gap-2 text-zinc-400 hover:text-orange-500 transition">
+            <button
+              onClick={() => setOpenOrders(!openOrders)}
+              className="flex items-center gap-2 text-zinc-400 hover:text-orange-500 transition"
+            >
 
               <History size={18} />
               Meus Pedidos
@@ -257,6 +262,85 @@ export default function Home() {
         </div>
 
       </header>
+
+      {/* MEUS PEDIDOS */}
+      {openOrders && (
+
+        <div className="fixed top-0 right-0 h-screen w-[420px] bg-zinc-950 border-l border-zinc-800 z-[100] p-8 overflow-y-auto">
+
+          {/* TOPO */}
+          <div className="flex items-center justify-between mb-10">
+
+            <h2 className="text-3xl font-black">
+              Meus Pedidos
+            </h2>
+
+            <button
+              onClick={() => setOpenOrders(false)}
+              className="text-zinc-500 hover:text-white transition"
+            >
+              <X />
+            </button>
+
+          </div>
+
+          {/* LISTA */}
+          <div className="flex flex-col gap-10">
+
+            {ordersList.map((order) => (
+
+              <div
+                key={order.id}
+                className="border-b border-zinc-800 pb-8"
+              >
+
+                {/* ID */}
+                <h3 className="text-orange-500 font-bold mb-4">
+                  {order.id}
+                </h3>
+
+                {/* ITENS */}
+                <div className="flex flex-col gap-3">
+
+                  {order.items.map((item, index) => (
+
+                    <div
+                      key={index}
+                      className="flex items-center justify-between text-sm"
+                    >
+
+                      <span className="text-zinc-300">
+                        {item.quantity}x {item.name}
+                      </span>
+
+                      <span className="text-zinc-500">
+                        R$ {(item.price * item.quantity)
+                          .toFixed(2)
+                          .replace(".", ",")}
+                      </span>
+
+                    </div>
+
+                  ))}
+
+                </div>
+
+                {/* DATA */}
+                <p className="text-zinc-600 text-xs mt-5">
+
+                  {new Date(order.createdAt).toLocaleDateString("pt-BR")}
+
+                </p>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        </div>
+
+      )}
 
       {/* CARRINHO */}
       {openCart && (
@@ -390,7 +474,7 @@ export default function Home() {
         <div>
 
           <h1 className="text-2xl font-black uppercase text-orange-500 mb-2">
-            SnapBite Delivery 🔥
+            SnapBite Delivery
           </h1>
 
           <p className="text-5xl font-bold mb-8">
@@ -456,10 +540,11 @@ export default function Home() {
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-8 py-3 rounded-2xl transition whitespace-nowrap ${activeCategory === cat.id
+              className={`px-8 py-3 rounded-2xl transition whitespace-nowrap ${
+                activeCategory === cat.id
                   ? "bg-orange-500 text-white"
                   : "bg-zinc-900 text-zinc-400"
-                }`}
+              }`}
             >
 
               {cat.icon} {cat.label}
@@ -502,7 +587,7 @@ export default function Home() {
 
                     <span className="bg-green-500 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-lg">
 
-                      ✨ Novidade
+                      Novidade
 
                     </span>
 
@@ -512,7 +597,7 @@ export default function Home() {
 
                     <span className="bg-orange-500 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-lg">
 
-                      🔥 Mais Pedidos
+                      Mais Pedidos
 
                     </span>
 
