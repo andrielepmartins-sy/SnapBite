@@ -1,11 +1,5 @@
-// In-memory orders store (simulates database)
+import { Order, OrderStatus } from "../types/Order";
 
-import { Order } from "../types/Order";
-
-// Tipo estrito para os quatro status permitidos no sistema
-type OrderStatus = "pending" | "production" | "sent" | "delivered";
-
-// In a real app this would be persisted to a backend
 export const ordersList: Order[] = [
   {
     id: "ORD-001",
@@ -13,131 +7,100 @@ export const ordersList: Order[] = [
     customerName: "João Silva",
     customerEmail: "joao@email.com",
     customerPhone: "(11) 99999-0001",
-    address: "Rua das Flores, 123 - São Paulo, SP",
+    address: "Rua das Flores, 123",
     items: [
-      { productId: "h1", name: "Classic Smash", price: 32.9, quantity: 2 },
-      { productId: "b1", name: "Refrigerante Lata", price: 7.9, quantity: 2 },
+      {
+        productId: "h1",
+        name: "Classic Smash",
+        price: 32.9,
+        quantity: 2,
+      },
     ],
-    subtotal: 81.6,
-    deliveryFee: 5.0,
-    total: 86.6,
-    payment: { method: "credit_card", status: "approved" },
-    status: "delivered",
+    subtotal: 65.8,
+    deliveryFee: 5,
+    total: 70.8,
+
+    payment: {
+      method: "pix",
+      status: "approved",
+    },
+
+    status: "pending",
+
     statusHistory: [
-      { status: "pending", time: "18:05", label: "Pedido realizado" },
-      { status: "production", time: "18:08", label: "Em produção" },
-      { status: "sent", time: "18:35", label: "Saiu para entrega" },
-      { status: "delivered", time: "18:58", label: "Entregue" },
+      {
+        status: "pending",
+        time: "18:05",
+        label: "Pedido recebido",
+      },
     ],
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
+
+    createdAt: new Date().toISOString(),
     estimatedTime: "30-45 min",
     notes: "",
   },
-  {
-    id: "ORD-002",
-    userId: "u2",
-    customerName: "Maria Souza",
-    customerEmail: "maria@email.com",
-    customerPhone: "(11) 99999-0002",
-    address: "Av. Paulista, 456 - São Paulo, SP",
-    items: [
-      { productId: "p1", name: "Pepperoni Supreme", price: 54.9, quantity: 1 },
-      { productId: "b2", name: "Milkshake Premium", price: 22.9, quantity: 1 },
-    ],
-    subtotal: 77.8,
-    deliveryFee: 5.0,
-    total: 82.8,
-    payment: { method: "pix", status: "approved" },
-    status: "production",
-    statusHistory: [
-      { status: "pending", time: "19:10", label: "Pedido realizado" },
-      { status: "production", time: "19:12", label: "Em produção" },
-    ],
-    createdAt: new Date(Date.now() - 600000).toISOString(),
-    estimatedTime: "30-45 min",
-    notes: "Sem cebola na pizza.",
-  },
 ];
 
-// Mapeamento dos metadados com chaves estritas (evita que o TypeScript infira chaves genéricas)
 export const ORDER_STATUSES: Record<
-  OrderStatus, 
-  { label: string; color: string; icon: string; next: OrderStatus | null }
+  OrderStatus,
+  {
+    label: string;
+    color: string;
+    icon: string;
+    next: OrderStatus | null;
+  }
 > = {
   pending: {
-    label: "Pedido Recebido",
-    color: "yellow",
-    icon: "📋",
+    label: "Recebido",
+    color: "blue",
+    icon: "📥",
     next: "production",
   },
-  production: { 
-    label: "Em Produção", 
-    color: "blue", 
-    icon: "👨‍🍳", 
-    next: "sent" 
+
+  production: {
+    label: "Em Produção",
+    color: "purple",
+    icon: "🍔",
+    next: "sent",
   },
+
   sent: {
-    label: "Saiu para Entrega",
-    color: "orange",
-    icon: "🛵",
+    label: "Enviado",
+    color: "pink",
+    icon: "🚚",
     next: "delivered",
   },
-  delivered: { 
-    label: "Entregue", 
-    color: "green", 
-    icon: "✅", 
-    next: null 
+
+  delivered: {
+    label: "Entregue",
+    color: "green",
+    icon: "✅",
+    next: null,
   },
 };
 
-let orderCounter = 3;
+export function updateOrderStatus(
+  orderId: string,
+  newStatus: OrderStatus
+) {
+  const order = ordersList.find(
+    (o) => o.id === orderId
+  );
 
-export function createOrder(orderData: Omit<Order, "id" | "status" | "statusHistory" | "createdAt" | "estimatedTime">) {
-  const id = `ORD-${String(orderCounter++).padStart(3, "0")}`;
-  const now = new Date();
-  const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-  
-  const newOrder: Order = {
-    ...orderData,
-    id,
-    status: "pending",
-    statusHistory: [
-      { status: "pending", time: timeStr, label: "Pedido realizado" },
-    ],
-    createdAt: now.toISOString(),
-    estimatedTime: "30-45 min",
-  };
-  
-  ordersList.push(newOrder);
-  return newOrder;
-}
+  if (!order) return;
 
-// Corrigido: o parâmetro agora aceita explicitamente o tipo estruturado da união de status
-export function updateOrderStatus(orderId: string, newStatus: OrderStatus) {
-  const order = ordersList.find((o) => o.id === orderId);
-  if (!order) return null;
-  
-  const now = new Date();
-  const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-  
   order.status = newStatus;
+
+  const now = new Date();
+
+  const time = now.toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   order.statusHistory.push({
     status: newStatus,
-    time: timeStr,
+    time,
     label: ORDER_STATUSES[newStatus].label,
   });
-  
-  return order;
-}
-
-export function getOrdersByUser(userId: string) {
-  return ordersList
-    .filter((o) => o.userId === userId)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-}
-
-export function getAllOrders() {
-  return [...ordersList].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
 }
